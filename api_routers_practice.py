@@ -3,5 +3,5 @@ from sqlalchemy import create_engine, text
 from note import note
 
 
-app=APIRouter
+app=FastAPI()
 app.include_router(note)
