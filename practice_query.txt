@@ -463,3 +463,36 @@ left join san_dispatch_status sds on sds.CAT_ID=adc.dispatch_status_id
 order by Request_Date
 limit 10
 ;
+select distinct att.task_id,
+                            ata.task_name,
+                            if (CONCAT(aei.FIRST_NAME, ' ', aei.LAST_NAME)  is null,CONCAT(aei1.FIRST_NAME, ' ', aei1.LAST_NAME),CONCAT(aei.FIRST_NAME, ' ', aei.LAST_NAME)) as user,
+                            CONCAT(aei2.FIRST_NAME, ' ', aei2.LAST_NAME) AS assigned_by,
+                            CONCAT(aei3.FIRST_NAME, ' ', aei3.LAST_NAME) AS reporting_manager,
+                            DATE(ata.task_plan_date)                     as alligned_date,
+                            DATE_FORMAT(att2.created_time, '%Y-%m-%d')    AS worked_on_date,
+                            ata.m_task_type_id,
+                            mtt.m_task_type,
+                            mts.m_task_status,
+                            ata.task_type_no,
+                            asr.STORE_ID as store_code,
+                            asi.FIRST_NAME                               as store_name,
+                            abi.FIRST_NAME                               as brand_name,
+                            aci.FIRST_NAME                               as client_name,
+                            att.transaction_remark,
+                            if(att.task_id=att2.task_id ,'Check IN',Null) as Check_in
+            from adm_task_transaction as att
+                     left join adm_task_assigned ata on att.task_id = ata.task_id
+                     left join adm_store_info asi on ata.store_id = asi.ADMIN_ID
+                     left join (select task_id, created_time, updated_by from adm_task_transaction where m_attendance_type_id=5) as att2 on att.task_id=att2.task_id
+                     left join adm_store_regdetails asr on asr.ID = asi.ADMIN_ID
+                     left join adm_brand_info abi ON abi.ADMIN_ID = asr.BRAND_ID
+                     left join adm_employee_info aei ON aei.ADMIN_ID = att2.updated_by
+                     left join adm_employee_info aei1 ON aei1.ADMIN_ID = att.updated_by
+                     left join adm_employee_info aei2 ON aei2.ADMIN_ID = ata.task_assigned_by
+                     left join adm_employee_info aei3 ON aei3.ADMIN_ID = aei.MANAGER_ID
+                     left join adm_client_info aci ON aci.ADMIN_ID = ata.client_id
+                     left join m_task_type mtt on mtt.m_task_type_id = ata.m_task_type_id
+                     left join m_task_status mts on mts.m_task_status_id = ata.m_task_status_id
+where att.updated_by_type=1
+  and att.transaction_remark like '%TS-ASSIGNED-TO%' or att.transaction_remark like '%task created%'
+;
